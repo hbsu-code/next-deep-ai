@@ -1,8 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
-  // Add any other configuration as needed
+  experimental: {
+    serverComponentsExternalPackages: ["pdf-parse"],
+  },
+  // Ensure images from vercel.com domains can be optimized
+  images: {
+    domains: ["vercel.com"],
+  },
 };
 
 module.exports = nextConfig;

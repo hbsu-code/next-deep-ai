@@ -3,11 +3,11 @@ import { writeFile } from "fs/promises";
 import { join } from "path";
 import * as fs from "fs";
 import { v4 as uuidv4 } from "uuid";
+import { parsePdf } from "@/services/pdfParser";
 import {
-  parsePdf,
-  summarizePdfContent,
-  extractKeyPoints,
-} from "@/services/pdfParser";
+  summarizeWithOpenAI,
+  extractKeyPointsWithOpenAI,
+} from "@/services/openAiService";
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,6 +34,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Verify OpenAI API key is set
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json(
+        { error: "OpenAI API key is not configured" },
+        { status: 500 },
+      );
+    }
+
     // Create a unique file name
     const fileName = `${uuidv4()}.pdf`;
 
@@ -56,18 +64,25 @@ export async function POST(request: NextRequest) {
     await writeFile(filePath, buffer);
 
     // Parse the PDF and generate a summary
+    let extractedText = "";
     let summary = "";
     let keyPoints: string[] = [];
     let documentInfo = {};
 
     try {
+      // Extract text from PDF
       const parsedPdf = await parsePdf(filePath);
+      extractedText = parsedPdf.text;
 
-      // Generate the summary
-      summary = summarizePdfContent(parsedPdf.text, 1500);
+      if (extractedText.trim().length === 0) {
+        throw new Error("No text content could be extracted from the PDF");
+      }
 
-      // Extract key points
-      keyPoints = extractKeyPoints(parsedPdf.text);
+      // Generate the summary using OpenAI
+      summary = await summarizeWithOpenAI(extractedText, 600);
+
+      // Extract key points using OpenAI
+      keyPoints = await extractKeyPointsWithOpenAI(extractedText, 5);
 
       // Get document info
       documentInfo = {
@@ -77,9 +92,9 @@ export async function POST(request: NextRequest) {
         creationDate: parsedPdf.info.CreationDate || "Unknown",
       };
     } catch (err) {
-      console.error("Error parsing PDF:", err);
-      // If parsing fails, generate a fallback message
-      summary = `Unable to parse the content of "${file.name}". The file might be encrypted, password protected, or contain only scanned images without OCR text.`;
+      console.error("Error processing PDF:", err);
+      // If parsing or AI processing fails, generate a fallback message
+      summary = `Unable to analyze the content of "${file.name}". The file might be encrypted, password protected, or contain only scanned images without OCR text.`;
     }
 
     // Format the summary with key points
