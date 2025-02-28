@@ -1,24 +1,51 @@
-@import "tailwindcss";
-
-@theme {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --foreground: #f4f4f5;
+  --background: #18181b;
+  --accent: #8b5cf6;
+  --accent-hover: #7c3aed;
+  --accent-light: #a78bfa;
+  --gray-800: #27272a;
+  --gray-700: #3f3f46;
+  --gray-600: #52525b;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer components {
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-900;
+  }
+
+  .btn-primary {
+    @apply bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition-colors focus-ring;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition-colors focus-ring;
+  }
+
+  .btn-outline {
+    @apply border border-purple-500 text-purple-400 hover:bg-purple-900 hover:bg-opacity-30 px-6 py-3 rounded-lg font-medium transition-colors focus-ring;
+  }
+}
+
+@layer utilities {
+  .bg-dark-900 {
+    background-color: var(--background);
+  }
+
+  .bg-dark-800 {
+    background-color: var(--gray-800);
+  }
+
+  .bg-dark-700 {
+    background-color: var(--gray-700);
+  }
 }
