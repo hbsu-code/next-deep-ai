@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.12.1",
     "next": "15.2.0",
     "openai": "^4.86.1",
     "pdf-parse": "^1.1.1",

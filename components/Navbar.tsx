@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { UserButton, SignInButton, useUser } from "@clerk/nextjs";
 
 export default function Navbar() {
   const pathname = usePathname();
+  const { isSignedIn, user } = useUser();
 
   return (
     <nav className="w-full py-4 px-6 bg-dark-800 border-b border-gray-700">
@@ -36,16 +38,39 @@ export default function Navbar() {
           >
             Home
           </Link>
-          <Link
-            href="/dashboard"
-            className={`px-3 py-2 rounded-md transition-colors ${
-              pathname === "/dashboard"
-                ? "text-purple-400 bg-purple-900 bg-opacity-30"
-                : "text-gray-300 hover:text-white hover:bg-gray-700"
-            }`}
-          >
-            Dashboard
-          </Link>
+
+          {isSignedIn && (
+            <Link
+              href="/dashboard"
+              className={`px-3 py-2 rounded-md transition-colors ${
+                pathname === "/dashboard"
+                  ? "text-purple-400 bg-purple-900 bg-opacity-30"
+                  : "text-gray-300 hover:text-white hover:bg-gray-700"
+              }`}
+            >
+              Dashboard
+            </Link>
+          )}
+
+          <div className="ml-4">
+            {!isSignedIn ? (
+              <SignInButton mode="modal">
+                <button className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white transition-colors">
+                  Sign In
+                </button>
+              </SignInButton>
+            ) : (
+              <UserButton
+                afterSignOutUrl="/"
+                appearance={{
+                  elements: {
+                    userButtonAvatarBox: "w-10 h-10",
+                    userButtonTrigger: "focus:shadow-none focus:outline-none",
+                  },
+                }}
+              />
+            )}
+          </div>
         </div>
       </div>
     </nav>

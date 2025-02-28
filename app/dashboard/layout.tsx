@@ -6,6 +6,8 @@ export const metadata = generateMetadata(
   ["dashboard", "upload", "analyze"],
 );
 
+// Dashboard layout is protected by the middleware
+// Only authenticated users can access this layout
 export default function DashboardLayout({
   children,
 }: {

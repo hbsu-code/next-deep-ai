@@ -1,7 +1,11 @@
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import { auth } from "@clerk/nextjs";
 
 export default function Home() {
+  const { userId } = auth();
+  const isSignedIn = !!userId;
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -26,11 +30,21 @@ export default function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="/dashboard" className="btn-primary">
-                Upload PDF Now
-              </Link>
-
-              <a href="#features" className="btn-outline">
+              {isSignedIn ? (
+                <Link href="/dashboard" className="btn-primary">
+                  Go to Dashboard
+                </Link>
+              ) : (
+                <>
+                  <Link href="/sign-up" className="btn-primary">
+                    Sign Up Free
+                  </Link>
+                  <Link href="/sign-in" className="btn-outline">
+                    Sign In
+                  </Link>
+                </>
+              )}
+              <a href="#features" className="btn-secondary">
                 Learn More
               </a>
             </div>
@@ -118,9 +132,15 @@ export default function Home() {
             </div>
 
             <div className="text-center mt-12">
-              <Link href="/dashboard" className="btn-primary">
-                Try It Now
-              </Link>
+              {isSignedIn ? (
+                <Link href="/dashboard" className="btn-primary">
+                  Go to Dashboard
+                </Link>
+              ) : (
+                <Link href="/sign-up" className="btn-primary">
+                  Try It Now
+                </Link>
+              )}
             </div>
           </div>
         </div>
