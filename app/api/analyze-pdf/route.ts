@@ -3,6 +3,11 @@ import { writeFile } from "fs/promises";
 import { join } from "path";
 import * as fs from "fs";
 import { v4 as uuidv4 } from "uuid";
+import {
+  parsePdf,
+  summarizePdfContent,
+  extractKeyPoints,
+} from "@/services/pdfParser";
 
 export async function POST(request: NextRequest) {
   try {
@@ -50,18 +55,54 @@ export async function POST(request: NextRequest) {
 
     await writeFile(filePath, buffer);
 
-    // In a real application, you'd process the PDF here
-    // For now, we'll generate a mock summary based on the filename
-    const summary = generateMockSummary(file.name);
+    // Parse the PDF and generate a summary
+    let summary = "";
+    let keyPoints: string[] = [];
+    let documentInfo = {};
 
-    // Delete the file after processing
+    try {
+      const parsedPdf = await parsePdf(filePath);
+
+      // Generate the summary
+      summary = summarizePdfContent(parsedPdf.text, 1500);
+
+      // Extract key points
+      keyPoints = extractKeyPoints(parsedPdf.text);
+
+      // Get document info
+      documentInfo = {
+        title: parsedPdf.info.Title || file.name,
+        author: parsedPdf.info.Author || "Unknown",
+        numPages: parsedPdf.numPages,
+        creationDate: parsedPdf.info.CreationDate || "Unknown",
+      };
+    } catch (err) {
+      console.error("Error parsing PDF:", err);
+      // If parsing fails, generate a fallback message
+      summary = `Unable to parse the content of "${file.name}". The file might be encrypted, password protected, or contain only scanned images without OCR text.`;
+    }
+
+    // Format the summary with key points
+    let formattedSummary = `# Summary of "${file.name}"\n\n${summary}`;
+
+    if (keyPoints.length > 0) {
+      formattedSummary += "\n\n## Key Points:\n\n";
+      keyPoints.forEach((point, index) => {
+        formattedSummary += `${index + 1}. ${point}\n`;
+      });
+    }
+
+    // Add document info
+    formattedSummary += `\n\n## Document Information:\n- Filename: ${file.name}\n- Pages: ${documentInfo.numPages || "Unknown"}\n- Author: ${documentInfo.author}\n- Creation Date: ${documentInfo.creationDate}`;
+
+    // Clean up - delete the file after processing
     try {
       fs.unlinkSync(filePath);
     } catch (err) {
       console.error("Error deleting file:", err);
     }
 
-    return NextResponse.json({ summary });
+    return NextResponse.json({ summary: formattedSummary });
   } catch (error) {
     console.error("Error processing PDF:", error);
     return NextResponse.json(
@@ -69,9 +110,4 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
-}
-
-// Mock function to generate a summary - in a real app you'd use PDF parsing and AI
-function generateMockSummary(filename: string): string {
-  return `# Summary of "${filename}"\n\nThis document appears to be a technical specification for a new software project. It outlines the requirements, architecture, and implementation details.\n\n## Key Points:\n\n1. The project aims to develop a cloud-based solution for data processing\n2. Expected completion timeline is Q2 2023\n3. Technology stack includes React, Node.js, and AWS\n4. Budget constraints require using existing infrastructure where possible\n\n## Main Sections:\n- Executive Summary\n- Technical Requirements\n- Architecture Design\n- Implementation Plan\n- Testing Strategy\n- Deployment Guidelines`;
 }
